@@ -23,10 +23,44 @@ pub mod my_first_anchor_program {
 
         //ensure only owner can update the value
         require!( //anchor's recommended way to check conditions and fail with an error
-            ctx.accounts.payer.key()==state.owner,
+            ctx.accounts.payer.key() == state.owner,
             anchor_lang::error::ErrorCode::ConstraintOwner
         );
-        state.value=new_value;
+        state.value = new_value;
+        Ok(())
+    }
+
+    //creates a new CircleState PDA for a given circle_id
+    //seeds: circle-state + owner (we’ll add circle_id later once you’re comfortable)
+    //sets initial fields: owner, circle_id, name, member_count
+    pub fn create_circle(
+        ctx: Context<CreateCircle>,
+        circle_id: u64,
+        name: String,
+    ) -> Result<()> {
+        let circle = &mut ctx.accounts.circle_state;
+        circle.owner = ctx.accounts.owner.key();
+        circle.circle_id = circle_id;
+        circle.name = name;
+        circle.member_count = 0;
+
+        Ok(())
+    }
+
+    //reuses the same pda, lets the owner update member_count
+    pub fn update_member_count(
+        ctx: Context<UpdateMemberCount>,
+        new_member_count: u64,
+    ) -> Result<()> {
+        let circle = &mut ctx.accounts.circle_state;
+
+        //only the owner of the circle can update the member count
+        require!(
+            ctx.accounts.owner.key() == circle.owner,
+            anchor_lang::error::ErrorCode::ConstraintOwner
+        );
+
+        circle.member_count = new_member_count;
         Ok(())
     }
 }
@@ -49,20 +83,51 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-//define the UpdateValue accounts struct (right below Initilaize)
+//define the UpdateValue accounts struct (right below Initialize)
 #[derive(Accounts)]
-pub struct UpdateValue<'info>{
+pub struct UpdateValue<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
     //use same pda, we dont init this time , we expect it to already exist 
     #[account(
         mut, //this acc will be modified
-        seeds=[b"my-state", payer.key().as_ref()], //this enforces that the same pda is derived
+        seeds = [b"my-state", payer.key().as_ref()], //this enforces that the same pda is derived
         bump
     )]
+    pub my_state: Account<'info, MyState>,
+}
 
-    pub my_state: Account<'info,MyState>,
+//accounts for create_circle
+#[derive(Accounts)]
+pub struct CreateCircle<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(
+        init,
+        payer = owner,
+        space = 8 + CircleState::LEN,
+        seeds = [b"circle-state", owner.key().as_ref()],
+        bump
+    )]
+    pub circle_state: Account<'info, CircleState>,
+
+    pub system_program: Program<'info, System>,
+}
+
+//accounts for update_member_count
+#[derive(Accounts)]
+pub struct UpdateMemberCount<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"circle-state", owner.key().as_ref()],
+        bump
+    )]
+    pub circle_state: Account<'info, CircleState>,
 }
 
 //This is the structure we will store inside my_state account’s data.
@@ -72,6 +137,20 @@ pub struct MyState {
     pub value: u64,
 }
 
+//for circle state
+#[account]
+pub struct CircleState {
+    pub owner: Pubkey,
+    pub circle_id: u64,
+    pub name: String,
+    pub member_count: u64,
+}
+
 impl MyState {
     pub const LEN: usize = 32 + 8; // Anchor uses LEN to know how much space to allocate when creating the account.
+}
+
+impl CircleState {
+    // 32 bytes for Pubkey, 8 for circle_id, 4 for string length prefix, 32 for max name length, 8 for member_count
+    pub const LEN: usize = 32 + 8 + 4 + 32 + 8;
 }
