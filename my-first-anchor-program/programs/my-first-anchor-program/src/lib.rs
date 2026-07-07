@@ -1,3 +1,4 @@
+#![allow(unexpected_cfgs)]
 use anchor_lang::prelude::*;
 
 declare_id!("HC2o6XV9tXYyQCHWfhWyzGaD1R3ht299YxeYfDGEYVD4"); //program's on-chain address
@@ -57,7 +58,7 @@ pub struct UpdateValue<'info>{
     //use same pda, we dont init this time , we expect it to already exist 
     #[account(
         mut, //this acc will be modified
-        seeds=[b"my_state", payer.key(),as_ref()], //this enforces that the same pda is derived
+        seeds=[b"my-state", payer.key().as_ref()], //this enforces that the same pda is derived
         bump
     )]
 

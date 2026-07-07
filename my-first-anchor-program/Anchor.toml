@@ -12,7 +12,7 @@ my_first_anchor_program = "HC2o6XV9tXYyQCHWfhWyzGaD1R3ht299YxeYfDGEYVD4"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
