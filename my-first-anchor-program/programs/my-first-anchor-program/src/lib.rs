@@ -1,0 +1,76 @@
+use anchor_lang::prelude::*;
+
+declare_id!("HC2o6XV9tXYyQCHWfhWyzGaD1R3ht299YxeYfDGEYVD4"); //program's on-chain address
+
+//#[program] + pub mod my_first_anchor_program: main module of my on-chain program 
+//So the whole initialize instruction does:
+//Create or use a my_state account and store two things in it: who called (owner) and the initial numeric value.”
+#[program]
+pub mod my_first_anchor_program {
+    use super::*;
+
+    //ctx: Context<Initialize> → a bundle of all accounts this instruction needs, initial_value: u64 → a number passed in by the caller.
+    pub fn initialize(ctx: Context<Initialize>, initial_value: u64) -> Result<()> {
+        let state = &mut ctx.accounts.my_state; //Grab a writable reference to the my_state account from the context.
+        state.owner = ctx.accounts.payer.key(); //Set the owner field in that account’s data to the payer’s pubkey.
+        state.value = initial_value; //Set the value field in that account’s data to the initial_value argument.
+        Ok(())
+    }
+
+    pub fn update_value(ctx: Context<UpdateValue>, new_value: u64) -> Result<()> {
+        let state = &mut ctx.accounts.my_state;
+
+        //ensure only owner can update the value
+        require!( //anchor's recommended way to check conditions and fail with an error
+            ctx.accounts.payer.key()==state.owner,
+            anchor_lang::error::ErrorCode::ConstraintOwner
+        );
+        state.value=new_value;
+        Ok(())
+    }
+}
+
+//This struct describes all the accounts the initialize instruction needs, and what rules they must follow.
+#[derive(Accounts)]
+pub struct Initialize<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>, //This is the user calling initialize. They must sign the transaction (Signer), and we’ll mark them mutable (mut) because we’ll charge them lamports to create the new account.
+
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + MyState::LEN,
+        seeds = [b"my-state", payer.key().as_ref()],
+        bump
+    )]
+    pub my_state: Account<'info, MyState>, //This is the account that will hold our custom MyState data.
+
+    pub system_program: Program<'info, System>,
+}
+
+//define the UpdateValue accounts struct (right below Initilaize)
+#[derive(Accounts)]
+pub struct UpdateValue<'info>{
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    //use same pda, we dont init this time , we expect it to already exist 
+    #[account(
+        mut, //this acc will be modified
+        seeds=[b"my_state", payer.key(),as_ref()], //this enforces that the same pda is derived
+        bump
+    )]
+
+    pub my_state: Account<'info,MyState>,
+}
+
+//This is the structure we will store inside my_state account’s data.
+#[account]
+pub struct MyState {
+    pub owner: Pubkey,
+    pub value: u64,
+}
+
+impl MyState {
+    pub const LEN: usize = 32 + 8; // Anchor uses LEN to know how much space to allocate when creating the account.
+}
