@@ -1,5 +1,5 @@
-#![allow(unexpected_cfgs)]
-use anchor_lang::prelude::*;
+#![allow(unexpected_cfgs)] //silences noisy rust warnings about internal anchor/solana cfg flags, so ur screen isnt spammed
+use anchor_lang::prelude::*; //imports anchor's core types/macros
 
 declare_id!("HC2o6XV9tXYyQCHWfhWyzGaD1R3ht299YxeYfDGEYVD4"); //program's on-chain address
 
