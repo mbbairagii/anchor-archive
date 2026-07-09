@@ -120,10 +120,12 @@ describe("my_first_anchor_program", () => {
 
     const newMemberCount = new BN(10);
 
+    // authority = real owner calling normally; owner = same key, used for PDA + has_one check
     await program.methods
       .updateMemberCount(newMemberCount)
       .accounts({
-        owner,
+        authority: owner,
+        owner: owner,
         circleState: circlePda,
       })
       .rpc();
@@ -145,10 +147,8 @@ describe("my_first_anchor_program", () => {
       program.programId
     );
 
-    // create a fresh wallet that is NOT the circle's owner
     const intruder = anchor.web3.Keypair.generate();
 
-    // fund the intruder so it can sign/pay for tx fees
     const airdropSig = await provider.connection.requestAirdrop(
       intruder.publicKey,
       anchor.web3.LAMPORTS_PER_SOL
@@ -158,10 +158,15 @@ describe("my_first_anchor_program", () => {
     let didThrow = false;
 
     try {
+      // KNOWN GAP: intruder signs as `authority`, but passes the REAL owner's pubkey as `owner`.
+      // has_one only checks circle_state.owner == owner.key(), which still passes here —
+      // nothing currently checks that authority == owner. This call is expected to SUCCEED,
+      // proving the current struct doesn't actually enforce real authorization yet.
       await program.methods
         .updateMemberCount(new BN(999))
         .accounts({
-          owner: intruder.publicKey, // wrong signer, PDA still derived from real owner
+          authority: intruder.publicKey,
+          owner: owner, // real owner's pubkey, satisfies has_one
           circleState: circlePda,
         })
         .signers([intruder])
@@ -180,7 +185,10 @@ describe("my_first_anchor_program", () => {
     }
 
     if (!didThrow) {
-      throw new Error("expected update_member_count to fail for non-owner, but it succeeded");
+      // this branch is what will actually happen right now — confirming the security gap
+      throw new Error(
+        "expected update_member_count to fail for non-owner, but it succeeded — authority is not actually enforced yet"
+      );
     }
   });
 });
