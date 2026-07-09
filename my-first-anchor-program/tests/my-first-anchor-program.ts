@@ -136,4 +136,51 @@ describe("my_first_anchor_program", () => {
       throw new Error("member_count not updated correctly");
     }
   });
+
+  it("rejects member count update from non-owner with CircleError", async () => {
+    const owner = provider.wallet.publicKey;
+
+    const [circlePda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("circle-state"), owner.toBuffer()],
+      program.programId
+    );
+
+    // create a fresh wallet that is NOT the circle's owner
+    const intruder = anchor.web3.Keypair.generate();
+
+    // fund the intruder so it can sign/pay for tx fees
+    const airdropSig = await provider.connection.requestAirdrop(
+      intruder.publicKey,
+      anchor.web3.LAMPORTS_PER_SOL
+    );
+    await provider.connection.confirmTransaction(airdropSig);
+
+    let didThrow = false;
+
+    try {
+      await program.methods
+        .updateMemberCount(new BN(999))
+        .accounts({
+          owner: intruder.publicKey, // wrong signer, PDA still derived from real owner
+          circleState: circlePda,
+        })
+        .signers([intruder])
+        .rpc();
+    } catch (err) {
+      didThrow = true;
+
+      const anchorErr = err as anchor.AnchorError;
+      console.log("Caught expected error:", anchorErr.error?.errorCode);
+
+      if (anchorErr.error?.errorCode?.code !== "UnauthorizedcircleUpdate") {
+        throw new Error(
+          `expected UnauthorizedcircleUpdate but got ${anchorErr.error?.errorCode?.code}`
+        );
+      }
+    }
+
+    if (!didThrow) {
+      throw new Error("expected update_member_count to fail for non-owner, but it succeeded");
+    }
+  });
 });
