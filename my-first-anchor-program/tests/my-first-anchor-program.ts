@@ -110,7 +110,7 @@ describe("my_first_anchor_program", () => {
     }
   });
 
-  it("updates member count", async () => {
+    it("updates member count", async () => {
     const owner = provider.wallet.publicKey;
 
     const [circlePda] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -120,12 +120,10 @@ describe("my_first_anchor_program", () => {
 
     const newMemberCount = new BN(10);
 
-    // authority = real owner calling normally; owner = same key, used for PDA + has_one check
     await program.methods
       .updateMemberCount(newMemberCount)
       .accounts({
-        authority: owner,
-        owner: owner,
+        owner,
         circleState: circlePda,
       })
       .rpc();
@@ -158,15 +156,12 @@ describe("my_first_anchor_program", () => {
     let didThrow = false;
 
     try {
-      // KNOWN GAP: intruder signs as `authority`, but passes the REAL owner's pubkey as `owner`.
-      // has_one only checks circle_state.owner == owner.key(), which still passes here —
-      // nothing currently checks that authority == owner. This call is expected to SUCCEED,
-      // proving the current struct doesn't actually enforce real authorization yet.
+      // intruder now signs AND is passed as owner — seeds won't even match circlePda,
+      // since seeds are derived from owner.key() which is now intruder's key, not the real owner's
       await program.methods
         .updateMemberCount(new BN(999))
         .accounts({
-          authority: intruder.publicKey,
-          owner: owner, // real owner's pubkey, satisfies has_one
+          owner: intruder.publicKey,
           circleState: circlePda,
         })
         .signers([intruder])
@@ -177,18 +172,15 @@ describe("my_first_anchor_program", () => {
       const anchorErr = err as anchor.AnchorError;
       console.log("Caught expected error:", anchorErr.error?.errorCode);
 
-      if (anchorErr.error?.errorCode?.code !== "UnauthorizedcircleUpdate") {
+      if (anchorErr.error?.errorCode?.code !== "ConstraintSeeds") {
         throw new Error(
-          `expected UnauthorizedcircleUpdate but got ${anchorErr.error?.errorCode?.code}`
+          `expected ConstraintSeeds but got ${anchorErr.error?.errorCode?.code}`
         );
       }
     }
 
     if (!didThrow) {
-      // this branch is what will actually happen right now — confirming the security gap
-      throw new Error(
-        "expected update_member_count to fail for non-owner, but it succeeded — authority is not actually enforced yet"
-      );
+      throw new Error("expected update_member_count to fail for non-owner, but it succeeded");
     }
   });
 });

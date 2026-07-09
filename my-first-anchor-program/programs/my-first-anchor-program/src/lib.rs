@@ -147,20 +147,14 @@ pub struct CreateCircle<'info> {
 
 
 //accounts for update_member_count
-//authority = whoever is actually calling right now (may or may not be the real owner)
-//owner = always the real owner's pubkey, used only to derive the correct PDA seeds
-//has_one = owner @ CircleError::... : Phase 1 check — Anchor verifies circle_state.owner == owner.key()
-//before the instruction body ever runs, and throws our custom error if it doesn't match
+//owner is now the actual Signer — this is the only account that can authorize this call
+//has_one = owner @ CircleError::... : Anchor checks circle_state.owner == owner.key()
+//in Phase 1, before the instruction body runs, and throws our custom error if it doesn't match
+//since owner must ALSO sign the transaction, no one can spoof this just by knowing the pubkey
 #[derive(Accounts)]
 pub struct UpdateMemberCount<'info> {
-    pub authority: Signer<'info>,
-
-
-
-    /// CHECK: validated declaratively via has_one against circle_state.owner
-    pub owner: UncheckedAccount<'info>,
-
-
+    #[account(mut)]
+    pub owner: Signer<'info>,
 
     #[account(
         mut,
