@@ -68,6 +68,7 @@ pub mod my_first_anchor_program {
     //so no require! needed here anymore — if we reach this line, authority is already verified as the owner
     pub fn update_member_count(
         ctx: Context<UpdateMemberCount>,
+        circle_id: u64,
         new_member_count: u64,
     ) -> Result<()> {
         let circle = &mut ctx.accounts.circle_state;
@@ -124,6 +125,7 @@ pub struct UpdateValue<'info> {
 
 //accounts for create_circle
 #[derive(Accounts)]
+#[instruction(circle_id: u64)]
 pub struct CreateCircle<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
@@ -134,7 +136,7 @@ pub struct CreateCircle<'info> {
         init,
         payer = owner,
         space = 8 + CircleState::LEN,
-        seeds = [b"circle-state", owner.key().as_ref()],
+        seeds = [b"circle-state", owner.key().as_ref(), &circle_id.to_le_bytes()],
         bump
     )]
     pub circle_state: Account<'info, CircleState>,
@@ -152,13 +154,14 @@ pub struct CreateCircle<'info> {
 //in Phase 1, before the instruction body runs, and throws our custom error if it doesn't match
 //since owner must ALSO sign the transaction, no one can spoof this just by knowing the pubkey
 #[derive(Accounts)]
+#[instruction(circle_id: u64)]
 pub struct UpdateMemberCount<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
     #[account(
         mut,
-        seeds = [b"circle-state", owner.key().as_ref()],
+        seeds = [b"circle-state", owner.key().as_ref(), &circle_id.to_le_bytes()],
         bump,
         has_one = owner @ CircleError::UnauthorizedcircleUpdate
     )]
