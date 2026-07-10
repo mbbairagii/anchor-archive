@@ -146,4 +146,39 @@ describe("my_first_anchor_program", () => {
 
     if (!didThrow) throw new Error("expected update_member_count to fail for non-owner, but it succeeded");
   });
+
+    it("closes circle #2 and reclaims rent", async () => {
+    const owner = provider.wallet.publicKey;
+    const circleId = new BN(2);
+
+    const [circlePda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("circle-state"), owner.toBuffer(), circleIdToLeBytes(circleId)],
+      program.programId
+    );
+
+    const balanceBefore = await provider.connection.getBalance(owner);
+
+    await program.methods
+      .closeCircle(circleId)
+      .accounts({
+        owner,
+        circleState: circlePda,
+      })
+      .rpc();
+
+    const balanceAfter = await provider.connection.getBalance(owner);
+
+    console.log("Owner balance before close:", balanceBefore);
+    console.log("Owner balance after close:", balanceAfter);
+
+    const closedAccount = await provider.connection.getAccountInfo(circlePda);
+
+    if (closedAccount !== null) {
+      throw new Error("circle account should be closed, but it still exists");
+    }
+
+    if (balanceAfter <= balanceBefore) {
+      throw new Error("owner should receive reclaimed rent after closing the circle");
+    }
+  });
 });

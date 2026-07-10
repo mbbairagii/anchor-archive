@@ -76,6 +76,17 @@ pub mod my_first_anchor_program {
         circle.member_count = new_member_count;
         Ok(())
     }
+
+
+
+    //closes a circle PDA and sends its rent back to the owner
+    //The body is intentionally empty because close = owner on the account struct does the actual lamport transfer and account reset automatically after the instruction succeeds.
+    pub fn close_circle(
+        _ctx: Context<CloseCircle>,
+        _circle_id: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 
@@ -168,6 +179,25 @@ pub struct UpdateMemberCount<'info> {
     pub circle_state: Account<'info, CircleState>,
 }
 
+
+
+//accounts for close_circle
+//close= owner means: after the instruc succeeds, anchor transfers all lamports from circle_state back to owner and reserts the acc data
+#[derive(Accounts)]
+#[instruction(circle_id: u64)]
+pub struct CloseCircle<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds= [b"circle-state", owner.key().as_ref(), &circle_id.to_le_bytes()],
+        bump,
+        has_one = owner @ CircleError::UnauthorizedcircleUpdate,
+        close=owner
+    )]
+    pub circle_state: Account<'info, CircleState>,
+}
 
 //This is the structure we will store inside my_state account’s data.
 #[account]
