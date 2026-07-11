@@ -103,4 +103,46 @@ describe("anchor-modular-practice", () => {
     expect(account.memberCount.toNumber()).to.equal(1);
     expect(account.name).to.equal("Core Team");
   });
+
+    it("updates circle #1 member count", async () => {
+    const owner = provider.wallet.publicKey;
+    const circleId = new anchor.BN(1);
+
+    const [circlePda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("circle-state"), owner.toBuffer(), u64ToLeBytes(circleId)],
+      program.programId
+    );
+
+    await program.methods
+      .updateMemberCount(circleId, new anchor.BN(25))
+      .accounts({
+        owner,
+        circleState: circlePda,
+      })
+      .rpc();
+
+    const account = await program.account.circleState.fetch(circlePda);
+    expect(account.memberCount.toNumber()).to.equal(25);
+  });
+
+  it("closes circle #2", async () => {
+    const owner = provider.wallet.publicKey;
+    const circleId = new anchor.BN(2);
+
+    const [circlePda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("circle-state"), owner.toBuffer(), u64ToLeBytes(circleId)],
+      program.programId
+    );
+
+    await program.methods
+      .closeCircle(circleId)
+      .accounts({
+        owner,
+        circleState: circlePda,
+      })
+      .rpc();
+
+    const closed = await program.account.circleState.fetchNullable(circlePda);
+    expect(closed).to.equal(null);
+  });
 });

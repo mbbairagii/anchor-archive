@@ -32,5 +32,17 @@ pub mod anchor_modular_practice {
     pub fn create_circle(ctx: Context<CreateCircle>, circle_id: u64, name: String) -> Result<()> {
         instructions::create_circle::handler(ctx, circle_id, name)
     }
+
+    pub fn update_member_count(
+        ctx: Context<UpdateMemberCount>,
+        circle_id: u64,
+        new_count: u64,
+    ) -> Result<()> {
+        instructions::update_member_count::handler(ctx, new_count)
+    }
+
+    pub fn close_circle(ctx: Context<CloseCircle>, circle_id: u64) -> Result<()> {
+        instructions::close_circle::handler(ctx, circle_id)
+    }
 }
 
