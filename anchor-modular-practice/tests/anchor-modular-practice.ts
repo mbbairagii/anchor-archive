@@ -17,7 +17,11 @@ describe("anchor-modular-practice", () => {
     program.programId
   );
 
-  it("initializes the PDA", async () => {
+  function u64ToLeBytes(value: anchor.BN): Buffer {
+    return value.toArrayLike(Buffer, "le", 8);
+  }
+
+  it("initializes my_state PDA", async () => {
     await program.methods
       .initialize(new anchor.BN(42))
       .accounts({
@@ -33,7 +37,7 @@ describe("anchor-modular-practice", () => {
     expect(account.value.toNumber()).to.equal(42);
   });
 
-  it("updates the stored value", async () => {
+  it("updates my_state value", async () => {
     await program.methods
       .updateValue(new anchor.BN(99))
       .accounts({
@@ -44,7 +48,59 @@ describe("anchor-modular-practice", () => {
 
     const account = await program.account.myState.fetch(myStatePda);
 
-    expect(account.value.toNumber()).to.equal(99);
     expect(account.owner.toBase58()).to.equal(payer.toBase58());
+    expect(account.value.toNumber()).to.equal(99);
+  });
+
+  it("creates circle #1", async () => {
+    const owner = provider.wallet.publicKey;
+    const circleId = new anchor.BN(1);
+
+    const [circlePda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("circle-state"), owner.toBuffer(), u64ToLeBytes(circleId)],
+      program.programId
+    );
+
+    await program.methods
+      .createCircle(circleId, "Founders")
+      .accounts({
+        owner,
+        circleState: circlePda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    const account = await program.account.circleState.fetch(circlePda);
+
+    expect(account.owner.toBase58()).to.equal(owner.toBase58());
+    expect(account.circleId.toNumber()).to.equal(1);
+    expect(account.memberCount.toNumber()).to.equal(1);
+    expect(account.name).to.equal("Founders");
+  });
+
+  it("creates circle #2 for the same owner", async () => {
+    const owner = provider.wallet.publicKey;
+    const circleId = new anchor.BN(2);
+
+    const [circlePda] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("circle-state"), owner.toBuffer(), u64ToLeBytes(circleId)],
+      program.programId
+    );
+
+    await program.methods
+      .createCircle(circleId, "Core Team")
+      .accounts({
+        owner,
+        circleState: circlePda,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .rpc();
+
+    const account = await program.account.circleState.fetch(circlePda);
+
+    expect(account.owner.toBase58()).to.equal(owner.toBase58());
+    expect(account.circleId.toNumber()).to.equal(2);
+    expect(account.memberCount.toNumber()).to.equal(1);
+    expect(account.name).to.equal("Core Team");
   });
 });

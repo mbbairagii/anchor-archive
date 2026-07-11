@@ -15,6 +15,7 @@ pub mod errors;
 pub mod instructions;
 
 pub use instructions::*;
+pub use state::*;
 
 #[program]
 pub mod anchor_modular_practice {
@@ -26,6 +27,10 @@ pub mod anchor_modular_practice {
 
     pub fn update_value(ctx: Context<UpdateValue>, new_value: u64) -> Result<()> {
         instructions::update_value::handler(ctx, new_value)
+    }
+
+    pub fn create_circle(ctx: Context<CreateCircle>, circle_id: u64, name: String) -> Result<()> {
+        instructions::create_circle::handler(ctx, circle_id, name)
     }
 }
 
