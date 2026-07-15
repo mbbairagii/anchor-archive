@@ -9,11 +9,15 @@ use anchor_spl::token::{Mint, Token}; //mint is the account type wrapper for an 
 pub fn handler(_ctx: Context<CreateMint>, _decimals: u8) -> Result<()> {
     Ok(())
 }
+//Why _ctx and _decimals?
+//The underscore means “I’m intentionally not using this parameter right now.” It avoids unused variable warnings in Rust.
+
+
 
 //this macro tells anchor how to validate and deserialize the instruction's acc before the handler runs
 #[derive(Accounts)]
 #[instruction(decimals: u8)]
-pub struct CreateMint<'info> {
+pub struct CreateMint<'info> { //'info is a Rust lifetime used by Anchor for account references
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -32,11 +36,12 @@ pub struct CreateMint<'info> {
 
 
 
-//pipleine::
-//You send create_mint(6).
-//You pass in: payer wallet, a fresh mint account address, token program, system program
-//Anchor sees #[account(init, ...)] on mint, so it creates that account.
-//Anchor makes payer pay rent for that new account.
-//Anchor initializes that new account as an SPL Mint account, not a normal custom account.
-//Anchor stores: decimals = 6, mint authority = payer, freeze authority = payer
-//Your handler returns Ok(()) because the important work is already done.
+//pipeline::
+//You call create_mint(6).
+//You pass:payer signer, fresh mint account address, token program, system program.
+//Anchor reads CreateMint.
+//Anchor sees init on mint, so it creates that account through the System Program.
+//Anchor charges payer rent in lamports.
+//Anchor initializes the new account as an SPL mint via the Token Program.
+//Anchor stores: decimals = 6, mint authority = payer, freeze authority = payer.
+//Then the handler runs and simply returns Ok(()).
