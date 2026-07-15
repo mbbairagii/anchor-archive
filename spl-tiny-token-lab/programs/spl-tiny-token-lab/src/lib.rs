@@ -18,4 +18,8 @@ pub mod spl_tiny_token_lab {
     pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
         instructions::mint_tokens::handler(ctx, amount)
     }
+
+    pub fn transfer_tokens(ctx: Context<TransferTokens>, amount: u64) -> Result<()> {
+        instructions::transfer_token::handler(ctx, amount)
+    }
 }
