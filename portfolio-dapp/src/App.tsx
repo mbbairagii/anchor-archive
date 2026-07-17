@@ -27,7 +27,7 @@ function App() {
 }
 
 function Topbar() {
-  const {publicKey} = useWallet();
+  const { publicKey } = useWallet();
   return <div style={{ display: "flex", justifyContent: "flex-end" }}>
     {!publicKey && <WalletMultiButton />}
     {publicKey && <WalletDisconnectButton />}
@@ -37,17 +37,19 @@ function Topbar() {
 
 function Portfolio() {
   const { publicKey } = useWallet();
-  const {connection} = useConnection();
+  const { connection } = useConnection();
   const [balance, setBalance] = useState<null | number>(null);
 
   useEffect(() => {
-    if(publicKey) {
-      connection.getBalance(publicKey).then((balance) => {
-        setBalance(balance);
-
-      });
+    if (!publicKey) {
+      setBalance(null);
+      return;
     }
-  }, [publicKey]);
+
+    connection.getBalance(publicKey).then((balance) => {
+      setBalance(balance);
+    });
+  }, [publicKey, connection]);
   return <div>
     {publicKey ? <p>Connected wallet: {publicKey.toBase58()}</p> : <p>Please connect your wallet.</p>}
     {balance !== null && <p>Balance: {balance / 1e9} SOL</p>}
