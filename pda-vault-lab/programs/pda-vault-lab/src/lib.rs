@@ -15,27 +15,29 @@ declare_id!("JCcPgN91g6u3zujTtS3ds45WPfDE1bXXuz7NXwfBRnhh");
 pub mod pda_vault_lab {
     use super::*;
 
+    //this instruction deosnt jave any manual logiv inside the body cuz the real work is happening declaratively inside the InitializeMint acc
+    //calling this func tells anchor to create and initialize the mint acc as specified by the acc constraints then return success
     pub fn initialize_mint(_ctx: Context<InitializeMint>) -> Result<()> {
         Ok(())
     }
 
     pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
-        let signer_seeds: &[&[&[u8]]] = &[&[
+        let signer_seeds: &[&[&[u8]]] = &[&[ //this is the most important line in the whole lesson. it rebuilds thr pda signer recipe using the same seed and the bump achor found for the mint pda
             b"mint",
-            &[ctx.bumps.mint],
+            &[ctx.bumps.mint], // the bump that made thr pda valid and offcurve 
         ]];
 
         let cpi_accounts = MintTo {
             mint: ctx.accounts.mint.to_account_info(),
             to: ctx.accounts.token_account.to_account_info(),
-            authority: ctx.accounts.mint.to_account_info(),
+            authority: ctx.accounts.mint.to_account_info(), //this means that the mint pda is acting as the mint auth
         };
 
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts)
+        let cpi_program = ctx.accounts.token_program.to_account_info(); //this gets the token prog acc info so anchor knows which external prog to call for the cpi
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts) //cpi context
             .with_signer(signer_seeds);
 
-        token_interface::mint_to(cpi_ctx, amount)?;
+        token_interface::mint_to(cpi_ctx, amount)?; //mint call
 
         Ok(())
     }
@@ -54,7 +56,7 @@ pub struct InitializeMint<'info> {
         seeds = [b"mint"],
         bump
     )]
-    pub mint: InterfaceAccount<'info, Mint>,
+    pub mint: InterfaceAccount<'info, Mint>, //means this is an acc accessed through anchor's token interface abstraction which is useful when working ith token prog interfaces rather than plain anchor-owned acc
 
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -85,3 +87,14 @@ pub struct MintTokens<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
+
+
+
+
+
+/*
+pipeline:
+transaction enters, Anchor validates accounts and PDA constraints, your handler
+ runs, then the CPI uses with_signer so the runtime re-derives the PDA and 
+ temporarily treats it as signed for the token program call.
+*/
