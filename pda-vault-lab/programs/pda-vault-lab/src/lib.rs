@@ -94,7 +94,18 @@ pub struct MintTokens<'info> {
 
 /*
 pipeline:
-transaction enters, Anchor validates accounts and PDA constraints, your handler
- runs, then the CPI uses with_signer so the runtime re-derives the PDA and 
- temporarily treats it as signed for the token program call.
+
+Create a mint.
+
+Set its mint authority to a PDA owned by your program.
+
+Later, a user calls your program and asks to mint tokens.
+
+Your program decides whether this request should be allowed.
+
+If yes, your program calls the token program via CPI.
+
+The runtime checks the PDA seeds and bump and temporarily lets that PDA count as a signer.
+
+The token program sees a valid mint authority and mints the tokens.
 */
