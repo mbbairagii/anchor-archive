@@ -6,7 +6,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{self, Mint, MintTo, TokenAccount, TokenInterface},
+    token_interface::{self, Mint, MintTo, TokenAccount, TokenInterface, TransferChecked},
 };
 
 declare_id!("JCcPgN91g6u3zujTtS3ds45WPfDE1bXXuz7NXwfBRnhh");
@@ -22,9 +22,10 @@ pub mod pda_vault_lab {
     }
 
     pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
-        let signer_seeds: &[&[&[u8]]] = &[&[ //this is the most important line in the whole lesson. it rebuilds thr pda signer recipe using the same seed and the bump achor found for the mint pda
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            //this is the most important line in the whole lesson. it rebuilds thr pda signer recipe using the same seed and the bump achor found for the mint pda
             b"mint",
-            &[ctx.bumps.mint], // the bump that made thr pda valid and offcurve 
+            &[ctx.bumps.mint], // the bump that made thr pda valid and offcurve
         ]];
 
         let cpi_accounts = MintTo {
@@ -38,6 +39,51 @@ pub mod pda_vault_lab {
             .with_signer(signer_seeds);
 
         token_interface::mint_to(cpi_ctx, amount)?; //mint call
+
+        Ok(())
+    }
+
+    /*
+    Deposit means: tokens move from user token account into vault token account.
+    Who approves this move? the user, because the tokens are leaving the user’s account
+    */
+    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        let decimals = ctx.accounts.mint.decimals;
+
+        let cpi_accounts = TransferChecked {
+            mint: ctx.accounts.mint.to_account_info(),
+            from: ctx.accounts.user_token_account.to_account_info(),
+            to: ctx.accounts.vault_token_account.to_account_info(),
+            authority: ctx.accounts.signer.to_account_info(),
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        token_interface::transfer_checked(cpi_ctx, amount, decimals)?;
+
+        Ok(())
+    }
+
+    /*
+    Withdraw means: tokens move from vault token account into user token account.
+    Who approves this move? the PDA, because the vault is controlled by the PDA
+    */
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        let decimals = ctx.accounts.mint.decimals;
+        let signer_seeds: &[&[&[u8]]] = &[&[b"vault", &[ctx.bumps.vault_authority]]];
+
+        let cpi_accounts = TransferChecked {
+            mint: ctx.accounts.mint.to_account_info(),
+            from: ctx.accounts.vault_token_account.to_account_info(),
+            to: ctx.accounts.user_token_account.to_account_info(),
+            authority: ctx.accounts.vault_authority.to_account_info(),
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts).with_signer(signer_seeds);
+
+        token_interface::transfer_checked(cpi_ctx, amount, decimals)?;
 
         Ok(())
     }
@@ -88,12 +134,115 @@ pub struct MintTokens<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct InitializeVault<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub mint: InterfaceAccount<'info, Mint>,
 
+    /// CHECK:
+    /// This PDA stores no data.
+    /// It is only used as the authority of the vault token account.
+    /// The PDA is verified by its seeds and bump.
+    #[account(
+        seeds=[b"vault"],
+        bump
+    )]
+    pub vault_authority: UncheckedAccount<'info>,
 
+    #[account(
+        init,
+        payer = signer,
+        token::mint = mint,
+        token::authority = vault_authority,
+        token::token_program = token_program,
+        seeds = [b"vault-token"],
+        bump
+    )]
+    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
 
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Deposit<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
+    pub mint: InterfaceAccount<'info, Mint>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = signer,
+        associated_token::token_program = token_program
+    )]
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        seeds = [b"vault-token"],
+        bump,
+        token::mint = mint,
+        token::authority = vault_authority,
+        token::token_program = token_program
+    )]
+    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    /// CHECK:
+    /// This PDA stores no data.
+    /// It is only used as the authority of the vault token account.
+    /// The seeds and bump guarantee this is the expected PDA.
+    #[account(
+        seeds = [b"vault"],
+        bump
+    )]
+    pub vault_authority: UncheckedAccount<'info>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+#[derive(Accounts)]
+pub struct Withdraw<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
+    pub mint: InterfaceAccount<'info, Mint>,
+
+    #[account(
+        init_if_needed,
+        payer = signer,
+        associated_token::mint = mint,
+        associated_token::authority = signer,
+        associated_token::token_program = token_program
+    )]
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        seeds = [b"vault-token"],
+        bump,
+        token::mint = mint,
+        token::authority = vault_authority,
+        token::token_program = token_program
+    )]
+    pub vault_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    /// CHECK: PDA used only as token authority
+    #[account(
+        seeds = [b"vault"],
+        bump
+    )]
+    pub vault_authority: UncheckedAccount<'info>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
 
 /*
-pipeline:
+pipeline: (pda as mint authority)
 
 Create a mint.
 
@@ -108,4 +257,21 @@ If yes, your program calls the token program via CPI.
 The runtime checks the PDA seeds and bump and temporarily lets that PDA count as a signer.
 
 The token program sees a valid mint authority and mints the tokens.
+*/
+
+
+
+
+/*
+pipeline (token transfer with a pda owned vault):
+
+The whole vault lesson is:
+
+create vault token account,
+
+make PDA its authority,
+
+deposit with user signing,
+
+withdraw with PDA signing
 */
