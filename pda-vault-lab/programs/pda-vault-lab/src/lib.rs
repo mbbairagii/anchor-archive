@@ -21,6 +21,10 @@ pub mod pda_vault_lab {
         Ok(())
     }
 
+    pub fn initialize_vault(_ctx: Context<InitializeVault>) -> Result<()> {
+        Ok(())
+    }
+
     pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
         let signer_seeds: &[&[&[u8]]] = &[&[
             //this is the most important line in the whole lesson. it rebuilds thr pda signer recipe using the same seed and the bump achor found for the mint pda
@@ -258,9 +262,6 @@ The runtime checks the PDA seeds and bump and temporarily lets that PDA count as
 
 The token program sees a valid mint authority and mints the tokens.
 */
-
-
-
 
 /*
 pipeline (token transfer with a pda owned vault):
