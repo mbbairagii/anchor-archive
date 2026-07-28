@@ -176,26 +176,63 @@
 //enums can also carry data inside variants
 //ex: enum Message { Quit, Move{x:i32, y:i32}, Write(String), ChangeColor(u8,u8,u8)}
 
+// enum Shape{
+//     Circle(f64),
+//     Square(f64),
+//     Rectangle(f64, f64)
+// }
+
+// fn calculate_area(shape: Shape) -> f64 {
+//     if let Shape::Circle(radius)=shape{
+//         return radius*radius*3.14;
+//     }
+
+//     if let Shape::Square(side)=shape{
+//         return side*side;
+//     }
+
+//     if let Shape::Rectangle(width, height) =shape{
+//         return width*height;
+//     }
+
+//     return 0.0;
+// }
+
+// fn main(){
+//     let circle = Shape::Circle(5.0);
+//     let square = Shape::Square(4.0);
+//     let rectangle = Shape::Rectangle(3.0, 6.0);
+
+//     let result1 = calculate_area(circle);
+//     let result2 = calculate_area(square);
+//     let result3 = calculate_area(rectangle);
+
+//     println!("{}", result1);
+//     println!("{}", result2);
+//     println!("{}", result3);
+// }
+//if let only matches one case at a time.
+
+
+
+
+
+
+
+//enum with pattern matching i.e. match
+//Here, the condition is the shape of the data itself. Rust uses that shape to safely pull out the values without unsafe casting.
 enum Shape{
     Circle(f64),
     Square(f64),
-    Rectangle(f64, f64)
+    Rectangle(f64,f64)
 }
 
-fn calculate_area(shape: Shape) -> f64 {
-    if let Shape::Circle(radius)=shape{
-        return radius*radius*3.14;
+fn calculate_area(shape: Shape) -> f64{
+    match shape{
+        Shape::Circle(radius)=> radius*radius*3.14,
+        Shape::Square(side)=> side*side,
+        Shape::Rectangle(width, height)=> width*height,
     }
-
-    if let Shape::Square(side)=shape{
-        return side*side;
-    }
-
-    if let Shape::Rectangle(width, height) =shape{
-        return width*height;
-    }
-
-    return 0.0;
 }
 
 fn main(){
@@ -207,8 +244,7 @@ fn main(){
     let result2 = calculate_area(square);
     let result3 = calculate_area(rectangle);
 
-    println!("{}", result1);
-    println!("{}", result2);
-    println!("{}", result3);
+    println!("Circle area: {}", result1);
+    println!("Square area: {}", result2);
+    println!("Rectangle area: {}", result3);
 }
-//if let only matches one case at a time.
