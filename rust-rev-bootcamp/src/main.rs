@@ -335,32 +335,93 @@
 
 
 //Option<String>
-#[derive(Debug)]
-struct User{
-    name: String,
-    middle_name: Option<String>
-}
+// #[derive(Debug)]
+// struct User{
+//     name: String,
+//     middle_name: Option<String>
+// }
 
-impl User{
-    fn new(name:String, middle_name:Option<String>) ->Self{
-        Self{name, middle_name}
-    }
+// impl User{
+//     fn new(name:String, middle_name:Option<String>) ->Self{
+//         Self{name, middle_name}
+//     }
 
-    fn print_name(&self){
-        match &self.middle_name{
-            Some(middle)=>println!("{} {}", self.name,middle),
-            None=>println!("{}",self.name)
-        }
-    }
-}
+//     fn print_name(&self){
+//         match &self.middle_name{
+//             Some(middle)=>println!("{} {}", self.name,middle),
+//             None=>println!("{}",self.name)
+//         }
+//     }
+// }
 
-fn main(){
-    let user1=User::new(String::from("mohini"), Some(String::from("bairagi")));
-    let user2 = User::new(String::from("Raman"), None);
+// fn main(){
+//     let user1=User::new(String::from("mohini"), Some(String::from("bairagi")));
+//     let user2 = User::new(String::from("Raman"), None);
 
-    user1.print_name();
-    user2.print_name();
+//     user1.print_name();
+//     user2.print_name();
 
-    println!("{:?}", user1);
-    println!("{:?}", user2);
-}
+//     println!("{:?}", user1);
+//     println!("{:?}", user2);
+// }
+
+
+
+
+
+
+
+
+
+
+//generics and trait bounds
+//generics let u write one function for many types, and trait bounds let u restrict which types are allowed
+//a generic type like T is a placeholder, the compiler replaces it with a real type when u call the func
+
+
+//a generic func that returns the first item of a vector, regardless of whether th vector contains integers, strings or floats
+// pub fn main(){
+//     let v=vec![1,2,3];
+//     let v2 = vec![String::from("mohini"), String::from("bairagi")];
+//     let v3=vec![1.0,2.0,3.0];
+//     println!("{}", first_element(v).unwrap());
+//     println!("{}", first_element(v2).unwrap());        //unwrap() extracts the value inside Some()
+//     println!("{}", first_element(v3).unwrap());
+// }
+// fn first_element<T>(v: Vec<T>) -> Option<T>{
+//     return v.into_iter().nth(0);
+//     //This consumes the vector and turns it into an iterator over its values.
+//     //.nth(0) asks for the element at index 0, which is the first element. If the vector is empty, it returns None
+// }
+
+
+//below code shows gnerics, trait bounds and boerowing vs ownership all together
+//thing to notice: first_element consumes its vector while does_exist only borrows it
+// pub fn main(){
+//     let v = vec![1, 2, 3];
+//     let v2 = vec![String::from("Harkirat"), String::from("Singh")];
+//     let v3 = vec![1.0, 2.0, 3.0];
+
+//     println!("{}", first_element(v.clone()).unwrap());                //v.clone() vreates a copy of v so that it can be used later in does_exist
+//     println!("{}", first_element(v2).unwrap());                        //takes ownership of v2 and gets the first elemet and prints it
+//     println!("{}", first_element(v3).unwrap());
+
+//     println!("{}", does_exist(v, 1));                                 //checks whether 1 is inside the original vector v
+// }
+// fn first_element<T>(v: Vec<T>) -> Option<T> {
+//     v.into_iter().nth(0)
+// }
+
+// fn does_exist<T: std::cmp::PartialEq>(v: Vec<T>, element: T) -> bool {
+//     let mut iter = v.iter();
+//     while let Some(value) = iter.next() {
+//         if *value == element {                                         //value is the ref so *value is the actual value, rust comapres it with element
+//             return true;
+//         }
+//     }
+//     false
+// }
+//PartialEq is req cuz the func uses ==
+
+
+
