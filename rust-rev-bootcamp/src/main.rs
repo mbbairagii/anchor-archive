@@ -259,33 +259,108 @@
 //error handling with result enum
 //in rust,the standard way to handle recoverable errors is to return s Result<T,E> where, Ok(T) is success and Err(E) is the custom error, this lets u use ? and pattern matching cleanly
 
+// #[derive(Debug)]
+
+// enum ParseAgeError{
+//     EmptyInput,
+//     InvalidNumber,
+//     TooSmall
+// }
+
+// fn parse_age(input: &str) -> Result<u32, ParseAgeError>{
+//     if input.trim().is_empty() {
+//         return Err(ParseAgeError::EmptyInput)
+//     }
+//     let age: u32 = input
+//         .trim()
+//         .parse()                                         //tries to convert the text into a u32
+//         .map_err(|_| ParseAgeError::InvalidNumber)?;           //if .parse() fails, rust normally gives a parse error, map_err() converts that error into ur custom error :ParseAgeError::InvalidNumber
+//         //the ? above means if there is an error, return it immediately 
+
+//     if age == 0 {
+//         return Err(ParseAgeError::TooSmall);
+//     }
+
+//     Ok(age)
+// }
+// fn main() {
+//     match parse_age("18") {
+//         Ok(age) => println!("Age: {}", age),
+//         Err(err) => println!("Error: {:?}", err),
+//     }
+// }
+
+
+
+
+
+
+
+
+
+//option enum: Option<T>
+//means a val is either present or absent
+//in rust, this is written as Some(value) or None
+
+// fn find_score(name: &str) -> Option<u32>{
+//     match name{
+//         "Aman" => Some(90),
+//         "Rohan" => Some(75),
+//         _ => None
+//     }
+// }
+
+// fn main(){
+//     let student1="Aman";
+//     let student2="Zara";
+
+//     match find_score(student1) {
+//         Some(score) => println!("{} got {}", student1, score),
+//         None => println!("{} not found", student1),
+//     }
+
+//     match find_score(student2) {
+//         Some(score) => println!("{} got {}", student2, score),
+//         None => println!("{} not found", student2),
+//     }
+// }
+
+
+
+
+
+
+
+
+
+
+//Option<String>
 #[derive(Debug)]
-
-enum ParseAgeError{
-    EmptyInput,
-    InvalidNumber,
-    TooSmall
+struct User{
+    name: String,
+    middle_name: Option<String>
 }
 
-fn parse_age(input: &str) -> Result<u32, ParseAgeError>{
-    if input.trim().is_empty() {
-        return Err(ParseAgeError::EmptyInput)
-    }
-    let age: u32 = input
-        .trim()
-        .parse() //tries to convert the text into a u32
-        .map_err(|_| ParseAgeError::InvalidNumber)?; //if .parse() fails, rust normally gives a parse error, map_err() converts that error into ur custom error :ParseAgeError::InvalidNumber
-        //the ? above means if there is an error, return it immediately 
-
-    if age == 0 {
-        return Err(ParseAgeError::TooSmall);
+impl User{
+    fn new(name:String, middle_name:Option<String>) ->Self{
+        Self{name, middle_name}
     }
 
-    Ok(age)
+    fn print_name(&self){
+        match &self.middle_name{
+            Some(middle)=>println!("{} {}", self.name,middle),
+            None=>println!("{}",self.name)
+        }
+    }
 }
-fn main() {
-    match parse_age("18") {
-        Ok(age) => println!("Age: {}", age),
-        Err(err) => println!("Error: {:?}", err),
-    }
+
+fn main(){
+    let user1=User::new(String::from("mohini"), Some(String::from("bairagi")));
+    let user2 = User::new(String::from("Raman"), None);
+
+    user1.print_name();
+    user2.print_name();
+
+    println!("{:?}", user1);
+    println!("{:?}", user2);
 }
