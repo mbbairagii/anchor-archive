@@ -221,30 +221,71 @@
 
 //enum with pattern matching i.e. match
 //Here, the condition is the shape of the data itself. Rust uses that shape to safely pull out the values without unsafe casting.
-enum Shape{
-    Circle(f64),
-    Square(f64),
-    Rectangle(f64,f64)
+// enum Shape{
+//     Circle(f64),
+//     Square(f64),
+//     Rectangle(f64,f64)
+// }
+
+// fn calculate_area(shape: Shape) -> f64{
+//     match shape{
+//         Shape::Circle(radius)=> radius*radius*3.14,
+//         Shape::Square(side)=> side*side,
+//         Shape::Rectangle(width, height)=> width*height,
+//     }
+// }
+
+// fn main(){
+//     let circle = Shape::Circle(5.0);
+//     let square = Shape::Square(4.0);
+//     let rectangle = Shape::Rectangle(3.0, 6.0);
+
+//     let result1 = calculate_area(circle);
+//     let result2 = calculate_area(square);
+//     let result3 = calculate_area(rectangle);
+
+//     println!("Circle area: {}", result1);
+//     println!("Square area: {}", result2);
+//     println!("Rectangle area: {}", result3);
+// }
+
+
+
+
+
+
+
+
+//error handling with result enum
+//in rust,the standard way to handle recoverable errors is to return s Result<T,E> where, Ok(T) is success and Err(E) is the custom error, this lets u use ? and pattern matching cleanly
+
+#[derive(Debug)]
+
+enum ParseAgeError{
+    EmptyInput,
+    InvalidNumber,
+    TooSmall
 }
 
-fn calculate_area(shape: Shape) -> f64{
-    match shape{
-        Shape::Circle(radius)=> radius*radius*3.14,
-        Shape::Square(side)=> side*side,
-        Shape::Rectangle(width, height)=> width*height,
+fn parse_age(input: &str) -> Result<u32, ParseAgeError>{
+    if input.trim().is_empty() {
+        return Err(ParseAgeError::EmptyInput)
     }
+    let age: u32 = input
+        .trim()
+        .parse() //tries to convert the text into a u32
+        .map_err(|_| ParseAgeError::InvalidNumber)?; //if .parse() fails, rust normally gives a parse error, map_err() converts that error into ur custom error :ParseAgeError::InvalidNumber
+        //the ? above means if there is an error, return it immediately 
+
+    if age == 0 {
+        return Err(ParseAgeError::TooSmall);
+    }
+
+    Ok(age)
 }
-
-fn main(){
-    let circle = Shape::Circle(5.0);
-    let square = Shape::Square(4.0);
-    let rectangle = Shape::Rectangle(3.0, 6.0);
-
-    let result1 = calculate_area(circle);
-    let result2 = calculate_area(square);
-    let result3 = calculate_area(rectangle);
-
-    println!("Circle area: {}", result1);
-    println!("Square area: {}", result2);
-    println!("Rectangle area: {}", result3);
+fn main() {
+    match parse_age("18") {
+        Ok(age) => println!("Age: {}", age),
+        Err(err) => println!("Error: {:?}", err),
+    }
 }
