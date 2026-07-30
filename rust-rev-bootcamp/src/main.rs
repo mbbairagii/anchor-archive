@@ -425,3 +425,53 @@
 
 
 
+
+
+
+
+
+
+//generics over structs
+//means u define a struct with type placeholders like T ur U so the same struct can hold different kinds of data.
+//in rust, the generic type gets fixed when you create the value
+// struct Rect{
+//     width: f64,
+//     height: f64,
+// }
+// impl Rect{
+//     fn area(&self) -> f64{
+//         self.width*self.height
+//     }
+// }
+// fn main(){
+//     let rect1=Rect{width: 10.0, height: 5.0};
+//     let rect2=Rect{width: 3.0, height: 4.0};
+
+//     println!("Area of rect1: {}", rect1.area());
+//     println!("Area of rect2: {}", rect2.area());
+// }
+
+
+
+//adding a trait bound to it
+// use std::ops::Mul;
+// struct Rect<T>{
+//     width: T,
+//     height: T,
+
+// }
+// impl<T> Rect<T> where T: std::ops::Mul<Output=T> + Copy{                 //+copy is there bcz ur method needs ot copy the fields out of &self in order to multiply them
+//     fn area(&self) -> T{
+//         self.width*self.height
+//     }
+// }
+// fn main(){
+//     let rect1=Rect{width: 10.0, height: 5.0};
+//     let rect2=Rect{width: 3.0, height: 4.0};    
+//     println!("Area of rect1: {}", rect1.area());
+//     println!("Area of rect2: {}", rect2.area());
+// }
+
+//in the non-generic version above this one, f64 already implements both copy and Mul<Outputf64> so u dont hv to write any bounds, rust knows 
+//impl<T> introduces a type vairable T
+//Rect<T> means use that ttype variable T in the struct definition
