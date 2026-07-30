@@ -484,21 +484,75 @@
 
 
 //generics over enums
-enum Container<T>{
-    Some(T),
-    Empty
-}
-impl<T> Container<T>{
-    fn is_empty(&self) -> bool{
-        match self{
-            Container::Some(_)=>false,
-            Container::Empty=>true
-        }
-    }
-}
-fn main(){
-    let c1: Container<i32> = Container::Some(10);
-    let c2: Container<String> = Container::Empty;
-    println!("Is c1 empty? {}", c1.is_empty());
-    println!("Is c2 empty? {}", c2.is_empty()); 
-}
+// enum Container<T>{
+//     Some(T),
+//     Empty
+// }
+// impl<T> Container<T>{
+//     fn is_empty(&self) -> bool{
+//         match self{
+//             Container::Some(_)=>false,
+//             Container::Empty=>true
+//         }
+//     }
+// }
+// fn main(){
+//     let c1: Container<i32> = Container::Some(10);
+//     let c2: Container<String> = Container::Empty;
+//     println!("Is c1 empty? {}", c1.is_empty());
+//     println!("Is c2 empty? {}", c2.is_empty()); 
+// }
+
+
+
+
+
+
+//traits
+// traits are a way to define shared behaviour across types, think of them like interfaces : a trait says "any type that implements me must provide these methods" and then u can write code that works with any type having the trait
+// trait Summary{
+//     fn summarize(&self) -> String;
+// } 
+// struct NewsArticle{
+//     headline: String,
+//     location: String,
+// }
+// impl Summary for NewsArticle{
+//     fn summarize(&self) -> String{
+//         format!("{}, {}", self.headline, self.location)
+//     }
+// }
+// struct Tweet{
+//     username: String,
+//     content: String,
+// }
+// impl Summary for Tweet{
+//     fn summarize(&self) -> String{
+//         format!("{}: {}", self.username, self.content)
+//     }
+// }
+// fn main(){
+//     let article = NewsArticle{
+//         headline: String::from("Rust is awesome!"),
+//         location: String::from("Internet"),
+//     };      
+//     let tweet = Tweet{
+//         username: String::from("rustacean"),
+//         content: String::from("I love Rust!"),
+//     };
+//     println!("Article summary: {}", article.summarize());
+//     println!("Tweet summary: {}", tweet.summarize());
+// }
+
+
+
+
+//a trait is the definition of a behaviour(a set of methods) that a type can implement. 
+//a trait bound is a rule that says "this generic type must implement that trait"
+//in the above example, Summary is a trait and NewsArticle and Tweet are types that implemt the summary trait.
+// fn notify<T: Summary>(item: &T) {
+//     println!("Breaking news! {}", item.summarize());
+// }
+//here T:Summary is a trait bound
+//it restricts the generic type T to only types that implement Summary
+//u can also write bounds with where clauses
