@@ -475,3 +475,30 @@
 //in the non-generic version above this one, f64 already implements both copy and Mul<Outputf64> so u dont hv to write any bounds, rust knows 
 //impl<T> introduces a type vairable T
 //Rect<T> means use that ttype variable T in the struct definition
+
+
+
+
+
+
+
+
+//generics over enums
+enum Container<T>{
+    Some(T),
+    Empty
+}
+impl<T> Container<T>{
+    fn is_empty(&self) -> bool{
+        match self{
+            Container::Some(_)=>false,
+            Container::Empty=>true
+        }
+    }
+}
+fn main(){
+    let c1: Container<i32> = Container::Some(10);
+    let c2: Container<String> = Container::Empty;
+    println!("Is c1 empty? {}", c1.is_empty());
+    println!("Is c2 empty? {}", c2.is_empty()); 
+}
