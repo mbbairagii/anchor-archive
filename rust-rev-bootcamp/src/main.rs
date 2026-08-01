@@ -556,3 +556,49 @@
 //here T:Summary is a trait bound
 //it restricts the generic type T to only types that implement Summary
 //u can also write bounds with where clauses
+
+
+
+
+
+
+
+//macros in rust
+//macors allow metaprogramming by enabling the generation of code at compile time
+//they gen or transform the rust code before the program is actually compiled
+//metaprpgrammig is when u write code that operates on code
+
+//declarative macro (macro_rules!, these r pattern matching code templates u define, they match the suntax and expand it into rust code)
+
+// macro_rules! say_hello {
+//     () => {
+//         println!("helo");
+//     };
+// }
+// fn main(){
+//     say_hello!();
+// }
+
+
+// macro_rules! create_func {
+//     ($func_name: ident) => {
+//         fn $func_name(){                                                  //$func_name is a macro variable like a parameter, ident means that this must be an indeitifier
+//             println!("hello from {}", stringify!($func_name));
+//         }
+//     };
+// }
+// create_func!(hello);                    //this will create a func called "hello"
+// fn main(){
+//     hello();                            //prints "hello from hello"
+// }
+
+
+//procedural macros: these r more complex, allows u to define custom behaviour for code genration through rust code itself
+//operate on rust's abstract synatx tree and r commonly used for deriving traits automatically or creating custom attributes
+//u write a normal rust function that receives a TokenStream, manipulates it and returns a new TokenStream
+//3 types:
+//derive macros, attribute like, function like
+
+
+//custom derive macros: lets u create ur own #[derive(...)] atteibutes
+//when u write #[derive(MyTrait)] on a struct/enum, a custom derive macro automatically gen the "impl MyTrait for YourType{...}" code at compile time
