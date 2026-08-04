@@ -598,7 +598,80 @@
 //u write a normal rust function that receives a TokenStream, manipulates it and returns a new TokenStream
 //3 types:
 //derive macros, attribute like, function like
+//rust gives built-in derives: Debug, Clone, Copy, Eq, Hash, Default
 
 
 //custom derive macros: lets u create ur own #[derive(...)] atteibutes
 //when u write #[derive(MyTrait)] on a struct/enum, a custom derive macro automatically gen the "impl MyTrait for YourType{...}" code at compile time
+//example: suppose u invent a trait : 
+// trait Animal{
+//     fn sound()
+// }
+//normally u'd implement it manually:
+// impl Animal for Dog {
+//     fn sound() {
+//         println!("Woof");
+//     }
+// }
+
+//but maybe u want: 
+// #[derive(Animal)]
+// struct Dog;
+
+//now rust automatically gen:
+// impl Animal for Dog {
+//     fn sound() {
+//         println!("Woof");
+//     }
+// }
+
+
+
+
+//attribtue like macroin rust lets u create ur own #[...] attribute that can be attached to function, structs, modules, etc and transform or augment them at compile time.
+//they r more flexible than derive macros, derive only works on steucts/enums for traits but sttribute macros can touch msny kinds of items and more gen transformations
+// #[logged]
+// fn add(a: i32, b: i32) -> i32 {
+//     a + b
+// }
+
+//first create the proc-macro crate : cargo new logged_attr --lib -> cd logged_attr -> edit the Cargo.toml:
+// [package]
+// name = "logged_attr"
+// version = "0.1.0"
+// edition = "2021"
+
+// [lib]
+// proc-macro = true
+
+// [dependencies]
+// proc-macro2 = "1"
+// quote = "1"
+// syn = { version = "2", features = ["full"] }
+// -> finally implment the attribute macro like:
+// use proc_macro::TokenStream;
+// use quote::quote;
+// use syn::{parse_macro_input, ItemFn};
+
+// #[proc_macro_attribute]
+// pub fn logged(_attr: TokenStream, item: TokenStream) -> TokenStream {
+//     // Parse the attached item as a function
+//     let func = parse_macro_input!(item as ItemFn);
+
+//     let func_name = &func.sig.ident;
+//     let block = &func.block;
+//     let vis = &func.vis;
+//     let sig = &func.sig;
+
+//     // Generate a new function that logs before/after
+//     let expanded = quote! {
+//         #vis #sig {
+//             println!("Calling {}", stringify!(#func_name));
+//             let result = #block;
+//             println!("{} returned {:?}", stringify!(#func_name), result);
+//             result
+//         }
+//     };
+
+//     expanded.into()
+// }

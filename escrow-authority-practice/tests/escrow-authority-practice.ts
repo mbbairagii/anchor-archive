@@ -11,7 +11,6 @@ describe("escrow-authority-practice", () => {
     .EscrowAuthorityPractice as Program<EscrowAuthorityPractice>;
 
   const maker = provider.wallet;
-
   const taker = anchor.web3.Keypair.generate();
   const mint = anchor.web3.Keypair.generate();
 
@@ -41,7 +40,7 @@ describe("escrow-authority-practice", () => {
     );
   }
 
-  it("initializes escrow and escrow authority", async () => {
+  async function initializeEscrow() {
     const [escrowPda, escrowBump] = deriveEscrowPda(tradeId);
 
     const [authorityPda, authorityBump] = deriveAuthorityPda(escrowPda);
@@ -56,6 +55,18 @@ describe("escrow-authority-practice", () => {
         mint: mint.publicKey,
       })
       .rpc();
+
+    return {
+      escrowPda,
+      authorityPda,
+      escrowBump,
+      authorityBump,
+    };
+  }
+
+  it("initializes escrow and authority PDAs", async () => {
+    const { escrowPda, authorityPda, escrowBump, authorityBump } =
+      await initializeEscrow();
 
     const escrow = await program.account.escrow.fetch(escrowPda);
 
@@ -78,10 +89,8 @@ describe("escrow-authority-practice", () => {
     assert.equal(authority.bump, authorityBump);
   });
 
-  it("validates escrow deposit with correct accounts", async () => {
-    const [escrowPda] = deriveEscrowPda(tradeId);
-
-    const [authorityPda] = deriveAuthorityPda(escrowPda);
+  it("allows deposit validation with correct accounts", async () => {
+    const { escrowPda, authorityPda } = await initializeEscrow();
 
     const vault = anchor.web3.Keypair.generate();
 
@@ -98,8 +107,8 @@ describe("escrow-authority-practice", () => {
       .rpc();
   });
 
-  it("rejects an incorrect escrow authority PDA", async () => {
-    const [escrowPda] = deriveEscrowPda(tradeId);
+  it("rejects an incorrect escrow authority", async () => {
+    const { escrowPda } = await initializeEscrow();
 
     const fakeEscrow = anchor.web3.Keypair.generate().publicKey;
 
@@ -127,12 +136,9 @@ describe("escrow-authority-practice", () => {
   });
 
   it("rejects an incorrect mint", async () => {
-    const [escrowPda] = deriveEscrowPda(tradeId);
-
-    const [authorityPda] = deriveAuthorityPda(escrowPda);
+    const { escrowPda, authorityPda } = await initializeEscrow();
 
     const vault = anchor.web3.Keypair.generate();
-
     const wrongMint = anchor.web3.Keypair.generate();
 
     try {
@@ -154,7 +160,7 @@ describe("escrow-authority-practice", () => {
     }
   });
 
-  it("derives different escrow PDAs for different trade ids", async () => {
+  it("derives different PDAs for different trade IDs", async () => {
     const [escrow1] = deriveEscrowPda(new anchor.BN(1));
 
     const [escrow2] = deriveEscrowPda(new anchor.BN(2));
@@ -162,7 +168,7 @@ describe("escrow-authority-practice", () => {
     assert.notEqual(escrow1.toBase58(), escrow2.toBase58());
   });
 
-  it("derives different escrow PDAs for different takers", async () => {
+  it("derives different PDAs for different takers", async () => {
     const otherTaker = anchor.web3.Keypair.generate();
 
     const [escrow1] = deriveEscrowPda(tradeId);
