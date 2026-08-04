@@ -675,3 +675,52 @@
 
 //     expanded.into()
 // }
+// -> create a binary that uses it : cargo new logged_app --bin, edit logged_app/Cargo.toml:
+// [package]
+// name = "logged_app"
+// version = "0.1.0"
+// edition = "2021"
+
+// [dependencies]
+// logged_attr = { path = "../logged_attr" }
+// -> edit logged_app/src/main.rs:
+// use logged_attr::logged;
+
+// #[logged]
+// fn add(a: i32, b: i32) -> i32 {
+//     a + b
+// }
+
+// #[logged]
+// fn greet(name: &str) -> String {
+//     format!("Hello, {}!", name)
+// }
+
+// fn main() {
+//     let sum = add(2, 3);
+//     println!("sum = {}", sum);
+
+//     let msg = greet("Alice");
+//     println!("msg = {}", msg);
+// }
+//-> cargo run -p logged_app
+
+
+//function like macros u call with name!(...) just likefunc call but they expand into code at compile time, they r useful when u want custom syntax or code gen that a normal func or macro_rules! cant express as cleanly
+//example;
+// use proc_macro::TokenStream;
+
+// #[proc_macro]
+// pub fn hello_world(_input: TokenStream) -> TokenStream {
+//     "fn generated() { println!(\"Hello from generated\"); }"
+//         .parse()
+//         .unwrap()
+// }
+//usgae:
+// use my_macro_crate::hello_world;
+
+// hello_world!();
+
+// fn main() {
+//     generated();
+// }
