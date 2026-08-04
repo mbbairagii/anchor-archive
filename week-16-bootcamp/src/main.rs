@@ -71,10 +71,45 @@
 
 
 //assignment-2
+// use serde::{Deserialize, Serialize};
+
+// #[derive(Serialize, Deserialize, Debug)]
+// #[serde(rename_all= "camelCase")]
+
+// struct User {
+//     id: u64,
+//     name: String,
+//     address : String,
+//     pin_code : String,
+// }
+
+// fn main() {
+//     let user = User {
+//         id: 1,
+//         name: String::from("mohini"),
+//         address: String:: from("delhi"),
+//         pin_code: String::from("123456"),
+//     };
+
+//     let yaml = serde_yaml::to_string(&user).unwrap();
+//     println!("{}", yaml);
+
+//     let back: User = serde_yaml::from_str(&yaml).unwrap();
+//     println!("{:?}", back);
+// }
+
+
+
+
+
+
+
+
+//extension: change vriables to uppercase
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all= "camelCase")]
+#[serde(rename_all= "SCREAMING_SNAKE_CASE")]
 
 struct User {
     id: u64,
@@ -97,4 +132,3 @@ fn main() {
     let back: User = serde_yaml::from_str(&yaml).unwrap();
     println!("{:?}", back);
 }
-
