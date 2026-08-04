@@ -39,10 +39,26 @@
 
 
 
+//assigmnet-1
+// use serde::{Deserialize, Serialize};
 
+// #[derive(Serialize, Deserialize, Debug)]
 
+// struct User{
+//     id: u64,
+//     name: String,
+// }
 
+// fn main(){
+//     let user =User{
+//         id: 1,
+//         name: String::from("mohini"),
+//     };
 
+//     let yaml=serde_yaml::to_string(&user).unwrap();
+//     println!("{}",yaml); //uses dispaly
 
-
+//     let back: User = serde_yaml::from_str(&yaml).unwrap();
+//     println!("{:?}", back);  //uses debug
+// }
 
